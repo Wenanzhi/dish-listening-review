@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#142c29" />
+    <meta
+      name="description"
+      content="DiSH-Bench 独立人工听审工作台：随机抽样、双耳播放、两阶段审阅与独立结果导出。"
+    />
+    <title>DiSH · 独立听审工作台</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="./"
+        ><span class="brand-icon">◖<i>◗</i></span
+        ><span>DiSH<span class="brand-sub">LISTENING LAB</span></span></a
+      >
+      <div class="side-label">人工质量审查</div>
+      <nav>
+        <button class="nav active" data-view="workspace">
+          <span>◉</span> 听审工作台 <kbd>01</kbd></button
+        ><button class="nav" data-view="protocol">
+          <span>☷</span> 审查规则 <kbd>02</kbd></button
+        ><button class="nav" data-view="summary">
+          <span>▥</span> 汇总与复核 <kbd>03</kbd>
+        </button>
+      </nav>
+      <div class="sidebar-rule"></div>
+      <div class="profile">
+        <label for="reviewer">审阅者代号</label
+        ><input
+          id="reviewer"
+          maxlength="40"
+          placeholder="例如 reviewer-01"
+          autocomplete="off"
+        />
+        <div class="quiet">
+          使用固定代号，便于恢复记录。<br />无需提供姓名或邮箱。
+        </div>
+        <button id="set-reviewer" class="side-button">
+          进入 / 切换个人记录 →
+        </button>
+      </div>
+      <div class="side-bottom">
+        <span class="status-dot"></span> 独立审阅 · 本地保存
+        <p>完成后导出结果给组织者。<br />其他测试者看不到你的判断。</p>
+        <a
+          href="https://github.com/Wenanzhi/dish-listening-review"
+          target="_blank"
+          rel="noreferrer"
+          >GitHub 开源代码 ↗</a
+        ><a
+          href="https://huggingface.co/datasets/Heiheihaha17/DiSH-Bench-exhibition-v3"
+          target="_blank"
+          rel="noreferrer"
+          >DiSH-Bench V3 数据 ↗</a
+        >
+      </div>
+    </aside>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <span class="crumb">DiSH-Bench</span><span class="slash">/</span
+          ><span id="crumb">独立人工听审</span>
+        </div>
+        <div class="top-actions">
+          <span id="save-status">尚未开始</span
+          ><button id="export-results" class="button small">
+            ↓ 导出我的结果
+          </button>
+        </div>
+      </header>
+      <main id="workspace" class="view">
+        <section class="page-heading">
+          <div>
+            <div class="eyebrow">LISTEN · INSPECT · DOCUMENT</div>
+            <h1>让每一个判断，都有听见的依据。</h1>
+            <p>先独立听混音，再核对答案。把听辨困难与标注错误分开记录。</p>
+          </div>
+          <button id="calibrate" class="button">♧ 耳机与方向校准</button>
+        </section>
+        <div class="metrics">
+          <div>
+            <span class="metric-label">数据集中物理场景</span
+            ><strong id="total-scenes">—</strong
+            ><small>静态 800 · 动态 1,600</small>
+          </div>
+          <div>
+            <span class="metric-label">本轮场景</span
+            ><strong id="plan-count">00</strong
+            ><small id="plan-mode">等待抽样</small>
+          </div>
+          <div>
+            <span class="metric-label">已完成听审</span
+            ><strong id="completed-count">00</strong
+            ><small id="profile-label">请先设置审阅者代号</small>
+          </div>
+          <div>
+            <span class="metric-label">已记录疑点</span
+            ><strong id="issue-count">00</strong><small>疑点仍需集中复核</small>
+          </div>
+        </div>
+        <section class="sampling panel">
+          <div class="panel-title">
+            <span class="step-circle">↗</span>
+            <div>
+              <h2>选择本轮样本</h2>
+              <p>按场景抽取，每个场景随机一题；分散到不同房间与基础场景。</p>
+            </div>
+            <span class="badge" id="phase-badge">试审与正式结果分开</span>
+          </div>
+          <div class="sampling-controls">
+            <label
+              >阶段<select id="phase">
+                <option value="pilot">试审 · 熟悉规则</option>
+                <option value="formal">正式 · 独立记录</option>
+              </select></label
+            ><label
+              >场景条件<select id="mode">
+                <option value="balanced">静态 / 动态均衡</option>
+                <option value="static">仅静态</option>
+                <option value="dynamic">仅动态</option>
+              </select></label
+            ><label
+              >任务筛选<select id="task">
+                <option value="all">全部任务</option>
+              </select></label
+            ><label class="narrow"
+              >场景数<input
+                id="count"
+                type="number"
+                min="1"
+                max="800"
+                value="12" /></label
+            ><label class="seed-label"
+              >抽样种子<input id="seed" value="" maxlength="80" /></label
+            ><button id="sample" class="button primary">⤨ 随机抽取</button>
+          </div>
+          <div class="sampling-footer">
+            <div class="text-actions">
+              <button id="pilot-preset">20 场景试审</button
+              ><button id="formal-preset">200 场景正式清单</button
+              ><button id="export-plan">↓ 导出固定清单</button
+              ><label class="file-link"
+                >↑ 导入固定清单<input
+                  type="file"
+                  id="import-plan"
+                  accept=".json"
+                  hidden
+              /></label>
+            </div>
+            <span id="plan-id" class="mono">独立随机 / 共享清单</span>
+          </div>
+        </section>
+        <div class="work-grid">
+          <section class="panel queue-panel">
+            <div class="queue-title">
+              <h2>本轮队列</h2>
+              <span id="queue-progress" class="mono">0 / 0</span>
+            </div>
+            <div class="progress-track"><div id="progress-fill"></div></div>
+            <div id="queue" class="queue">
+              <div class="empty-queue">
+                设置代号并抽取样本，<br />开始第一次独立听审。
+              </div>
+            </div>
+            <div class="queue-foot">
+              同一基础场景不会重复抽取；<br />已看过答案的基础场景自动排除。
+            </div>
+          </section>
+          <div class="review-column">
+            <section id="sample-panel" class="panel sample-panel">
+              <div class="empty-state">
+                <div class="empty-icon">◖◗</div>
+                <h2>准备好，听见细节。</h2>
+                <p>
+                  戴上耳机，先完成方向校准，<br />再从随机样本开始独立判断。
+                </p>
+                <div class="empty-steps">
+                  <span>01 混音盲听</span><span>02 参考核验</span
+                  ><span>03 记录与导出</span>
+                </div>
+              </div>
+            </section>
+            <section id="form-panel" class="panel form-panel" hidden></section>
+          </div>
+        </div>
+        <footer>
+          DiSH-Bench · Independent listening review
+          <span>界面就绪不代表人工验证已完成。</span>
+        </footer>
+      </main>
+      <main id="protocol" class="view prose" hidden>
+        <div class="eyebrow">REVIEW PROTOCOL · V1</div>
+        <h1>先固定规则，再开始正式听审。</h1>
+        <p class="lead">
+          本工具用于抽样核验音频与标注质量。正式人类任务得分需要另设实验。
+        </p>
+        <section class="panel">
+          <h2>两阶段流程</h2>
+          <div class="protocol-grid">
+            <article>
+              <b>01 · 无提示盲听</b>
+              <p>
+                只查看原始题目允许的信息，听完整混合录音，记录目标是否清楚、部分可辨、无法辨认，或题目区域无目标。记录疑点和时间区间。
+              </p>
+            </article>
+            <article>
+              <b>02 · 参考核验</b>
+              <p>
+                锁定第一阶段后，显示参考答案、目标身份、原始源语音片段和场景轨迹。检查对应关系，并独立给出四项判断。第一阶段不能覆盖。
+              </p>
+            </article>
+          </div>
+          <p class="callout">
+            噪声、混响、遮挡与多人重叠可能是合理困难。“无法听清”不等于“标注错误”。空区域题允许其他区域有人说话。
+          </p>
+        </section>
+        <section class="panel">
+          <h2>四个审查维度</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>维度</th>
+                <th>检查依据</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>音频与渲染</td>
+                <td>
+                  异常断裂、重复、爆音、运动中的突兀跳变。不要把正常的噪声和混响直接判为缺陷。
+                </td>
+              </tr>
+              <tr>
+                <td>语音与文字</td>
+                <td>
+                  源语音截取片段与转写是否对应；有没有漏词或把另一人的话作为答案。
+                </td>
+              </tr>
+              <tr>
+                <td>问题与目标</td>
+                <td>
+                  内容或空间线索是否明确；参考答案是否属于题目指定的目标。
+                </td>
+              </tr>
+              <tr>
+                <td>空间与时间</td>
+                <td>
+                  方向与运动连续性有无明显异常；同一语音在不同接收端的内容与时间窗是否对应。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>播放和证据边界</h2>
+          <p>
+            原音频为 16 kHz ACN/SN3D [W,Y,Z,X]。工作台使用 MIT KEMAR 测量 HRTF
+            的一阶投影做双耳卷积，头朝向与当前接收机器人一致。所有接收端采用同一固定增益，不做逐条响度归一化，卷积尾部保留。
+          </p>
+          <p>
+            耳机左右声道测试只核对播放链路；方向校准音由同一个 FOA
+            解码器生成。通用 HRTF
+            并不保证每个人都能准确判断前后与仰角。20°、精确距离与世界坐标应通过几何和渲染检查验证。
+          </p>
+          <p>
+            第二阶段的无损源片段来自原始语音，时间标记对应混音时间轴。它不是经过房间传播的单声源渲染分量；当前界面未提供单声源渲染分量。参考轨迹是标注可视化，不是独立测量。
+          </p>
+          <p>
+            审阅者需熟悉英语语音；可填写自己的转写或描述疑点。前一阶段的意见会在界面中锁定，但公开静态网站不能防止主动查看源码获取答案；正式研究应在受控条件下使用。
+          </p>
+        </section>
+        <section class="panel">
+          <h2>正式组织与统计</h2>
+          <p>
+            建议先用 20 个场景试审，再固定审查规则。正式起点为静态 100、动态 100
+            个场景；三人导入同一份固定清单，先独立完成，再集中讨论。随机队列的房间分散与静动配额不保证所有人数、噪声、重叠和运动细分条件都覆盖充分，组织者应核对导出的清单。
+          </p>
+          <p>
+            第一位审阅者导出固定清单，其他两人导入该文件。每个人导出自己的结果文件，组织者在“汇总与复核”中导入三份文件。系统按同一清单、同一题计算各维度的原始一致率和名义
+            Krippendorff’s
+            α；仅一人审查或没有共同样本时不会给出虚假的多人一致性。
+          </p>
+          <p>
+            “无法判断”作为名义类别计入
+            α，并单独报告比例；“不适用”作为缺失处理。试审、曾看过同基础场景答案及播放失败的记录排除于正式统计之外。若所有判断恒定，α
+            显示未定义。复核意见单独保存，不替换讨论前结果。
+          </p>
+          <p>
+            所有判断存储于当前浏览器；无服务器自动收集。请及时导出
+            JSON，浏览器清理数据会移除本地进度。审阅者代号不具备身份认证功能，共享设备请各自使用独立浏览器配置。
+          </p>
+        </section>
+        <section class="panel">
+          <h2>方法与素材来源</h2>
+          <p>
+            <a
+              href="https://www.asc.upenn.edu/krippendorffs-alpha-reliability"
+              target="_blank"
+              rel="noreferrer"
+              >Krippendorff’s α 方法说明 ↗</a
+            >
+            ·
+            <a
+              href="https://plugins.iem.at/docs/plugindescriptions/#binauraldecoder"
+              target="_blank"
+              rel="noreferrer"
+              >IEM BinauralDecoder（另一种离线解码方案）↗</a
+            >
+            ·
+            <a
+              href="https://sound.media.mit.edu/resources/KEMAR.html"
+              target="_blank"
+              rel="noreferrer"
+              >KEMAR 数据与署名条件 ↗</a
+            >
+          </p>
+          <p>
+            界面代码采用 MIT 许可证。语音源自 LibriSpeech（CC BY
+            4.0）；混音中的环境声音保留各自许可，部分素材仅允许非商业用途。代码许可不覆盖音频素材。
+          </p>
+        </section>
+      </main>
+      <main id="summary" class="view" hidden>
+        <div class="eyebrow">INDEPENDENT RATINGS FIRST</div>
+        <h1>汇总独立意见，再复核分歧。</h1>
+        <p>
+          导入各审阅者的结果。只对正式、无提前曝光且播放正常的共同样本统计一致性。
+        </p>
+        <div class="panel summary-tools">
+          <label class="button primary file-link"
+            >↑ 导入多人结果<input
+              type="file"
+              id="import-results"
+              accept=".json"
+              multiple
+              hidden /></label
+          ><button id="my-summary" class="button">查看我的记录</button
+          ><button id="export-csv" class="button">↓ 明细 CSV</button
+          ><button id="export-summary" class="button">↓ 统计与复核 JSON</button
+          ><label
+            >预期审阅者人数
+            <input
+              id="expected-reviewers"
+              type="number"
+              min="2"
+              max="20"
+              value="3"
+          /></label>
+        </div>
+        <div id="summary-body" class="panel">
+          <div class="empty-state">
+            <h2>等待独立听审记录</h2>
+            <p>随机选到不同样本时，不能据此计算三人一致率。</p>
+          </div>
+        </div>
+        <div id="adjudication" class="panel" hidden></div>
+      </main>
+    </div>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="calibration">
+      <form method="dialog">
+        <button class="dialog-close" aria-label="关闭">×</button>
+      </form>
+      <div class="eyebrow">HEADPHONE CHECK</div>
+      <h2>保持耳机左右方向正确。</h2>
+      <p>
+        关闭系统空间增强。先以舒适音量试听左右声道，再试听通过同一解码器生成的方向音。
+      </p>
+      <label
+        >耳机 / 播放设备<input
+          id="headphones"
+          placeholder="例如 Sony WH-1000XM5，有线"
+      /></label>
+      <div class="calibration-buttons">
+        <button data-cal="ear-left" class="button">仅左耳</button
+        ><button data-cal="ear-right" class="button">仅右耳</button
+        ><button data-cal="front" class="button">前方 0°</button
+        ><button data-cal="left" class="button">左方 +90°</button
+        ><button data-cal="right" class="button">右方 −90°</button
+        ><button data-cal="back" class="button">后方 180°</button>
+      </div>
+      <p class="quiet">
+        左右方应能分开。前后不清楚时可继续内容核验，但空间维度应记录“无法判断”。
+      </p>
+      <label class="check-row"
+        ><input
+          id="cal-check"
+          type="checkbox"
+        />已使用耳机，确认左右方向和舒适音量</label
+      ><button id="save-cal" class="button primary">保存播放设置</button>
+    </dialog>
+    <noscript>此听审工具需要 JavaScript 来播放空间音频和保存记录。</noscript>
+  </body>
+</html>
