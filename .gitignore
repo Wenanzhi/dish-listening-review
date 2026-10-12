@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+__pycache__/
+.local/
+test-results/
+docs/workspace-empty.png
+docs/mobile.png
