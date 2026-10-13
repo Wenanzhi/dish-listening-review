@@ -5,13 +5,13 @@ export function parseWav(arrayBuffer) {
       String.fromCharCode(v.getUint8(p + i)),
     ).join("");
   if (v.byteLength < 44 || str(0, 4) !== "RIFF" || str(8, 4) !== "WAVE")
-    throw Error("不是受支持的 WAV 文件");
+    throw Error("Unsupported WAV file.");
   let format, channels, rate, bits, offset, bytes, align;
   for (let p = 12; p + 8 <= v.byteLength; ) {
     const id = str(p, 4),
       size = v.getUint32(p + 4, true),
       start = p + 8;
-    if (start + size > v.byteLength) throw Error("WAV 不完整");
+    if (start + size > v.byteLength) throw Error("Incomplete WAV file.");
     if (id === "fmt ") {
       format = v.getUint16(start, true);
       channels = v.getUint16(start + 2, true);
@@ -35,7 +35,7 @@ export function parseWav(arrayBuffer) {
     align !== (channels * bits) / 8 ||
     bytes % align
   )
-    throw Error("需要 16 kHz、四通道 ACN/SN3D FLOAT32 或 PCM16 WAV");
+    throw Error("Expected a 16 kHz, four-channel ACN/SN3D FLOAT32 or PCM16 WAV.");
   const n = bytes / align,
     data = Array.from({ length: 4 }, () => new Float32Array(n));
   for (let i = 0; i < n; i++)
@@ -43,7 +43,7 @@ export function parseWav(arrayBuffer) {
       const p = offset + ((i * 4 + c) * bits) / 8;
       const x =
         format === 3 ? v.getFloat32(p, true) : v.getInt16(p, true) / 32768;
-      if (!Number.isFinite(x)) throw Error("WAV 含无效数值");
+      if (!Number.isFinite(x)) throw Error("WAV contains non-finite samples.");
       data[c][i] = x;
     }
   return { rate, data, length: n };
@@ -54,7 +54,7 @@ export async function sha256(bytes) {
     .join("");
 }
 export async function decodeFOA(wav, decoder) {
-  if (decoder.rate !== wav.rate) throw Error("解码器采样率不匹配");
+  if (decoder.rate !== wav.rate) throw Error("Decoder sample rate does not match.");
   const context = new OfflineAudioContext(
     2,
     wav.length + decoder.filters[0][0].length - 1,
@@ -87,7 +87,7 @@ export async function decodeFOA(wav, decoder) {
 }
 export function encodeStereoWav(buffer, gain = 1) {
   if (buffer.numberOfChannels !== 2 || !Number.isFinite(gain) || gain <= 0)
-    throw Error("需要双耳信号和有效音量");
+    throw Error("A binaural signal and a valid playback gain are required.");
   const bytes = new ArrayBuffer(44 + buffer.length * 4);
   const view = new DataView(bytes);
   const write = (offset, text) =>
@@ -110,7 +110,7 @@ export function encodeStereoWav(buffer, gain = 1) {
     for (let i = 0; i < buffer.length; i++) {
       const x = samples[i] * gain;
       if (!Number.isFinite(x) || Math.abs(x) > 1)
-        throw Error("双耳信号超出范围，请降低音量后下载");
+        throw Error("The binaural signal exceeds the output range. Lower the volume before downloading.");
       view.setInt16(44 + (i * 2 + c) * 2,
         Math.round(x * (x < 0 ? 32768 : 32767)), true);
     }

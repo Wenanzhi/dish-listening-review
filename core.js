@@ -1,21 +1,21 @@
 export const VERSION = "dish-review-1.0";
 export const DIMENSIONS = {
-  audibility: "无提示可辨程度",
-  quality: "音频与渲染",
-  text: "语音与文字",
-  target: "问题与目标",
-  spatial: "空间与时间",
-  cross: "跨接收端对应",
+  audibility: "Blind audibility",
+  quality: "Audio & rendering",
+  text: "Speech & transcript",
+  target: "Question & target",
+  spatial: "Space & time",
+  cross: "Cross-receiver match",
 };
 export const LABELS = {
-  clear: "清楚可辨",
-  partial: "部分可辨",
-  masked: "无法辨认",
-  empty: "题目区域无目标",
-  uncertain: "无法判断",
-  pass: "未发现异常",
-  issue: "发现疑点",
-  na: "不适用",
+  clear: "Clearly discernible",
+  partial: "Partly discernible",
+  masked: "Indiscernible",
+  empty: "No target in queried region",
+  uncertain: "Unable to judge",
+  pass: "No anomaly found",
+  issue: "Concern flagged",
+  na: "Not applicable",
 };
 export function hash(s) {
   let h = 2166136261;
@@ -52,7 +52,7 @@ export function makePlan(
   },
 ) {
   if (!Number.isInteger(count) || count < 1 || count > 800)
-    throw Error("场景数量必须为 1–800");
+    throw Error("Scene count must be 1–800.");
   const rng = random(seed),
     used = new Set(excluded),
     picks = [];
@@ -106,7 +106,7 @@ export function makePlan(
       }
       if (!progress)
         throw Error(
-          `${m} 可用且未曝光的场景不足 ${n} 个。请减少数量、调整筛选，或使用固定清单。`,
+          `Fewer than ${n} unexposed ${m} scenes are available. Reduce the count, change the filter or import a shared plan.`,
         );
     }
   }
@@ -133,7 +133,7 @@ export function validatePlan(plan, catalog) {
     !Array.isArray(plan.samples) ||
     !plan.samples.length
   )
-    throw Error("清单版本、协议或数据集不匹配");
+    throw Error("Sample plan version, protocol or dataset does not match.");
   const ids = new Set();
   for (const p of plan.samples) {
     const s = catalog.scenes.find((x) => x.id === p.episode_id);
@@ -145,14 +145,14 @@ export function validatePlan(plan, catalog) {
       p.mode !== s.mode ||
       p.room !== s.room
     )
-      throw Error("清单包含无效、重复或错配的样本");
+      throw Error("The sample plan contains invalid, duplicate or mismatched samples.");
     ids.add(p.sample_id);
   }
   if (
     plan.id !==
     hash(catalog.revision + plan.phase + JSON.stringify(plan.samples))
   )
-    throw Error("清单 ID 校验失败");
+    throw Error("Sample plan ID verification failed.");
   return plan;
 }
 export function nominalAlpha(units) {
@@ -186,10 +186,10 @@ export function mergeExports(exports) {
       !x.reviewer ||
       !Array.isArray(x.records)
     )
-      throw Error("不是有效听审导出文件");
+      throw Error("This is not a valid review export.");
     const sig = [x.revision, x.protocol, x.version].join(":");
     if (signature && signature !== sig)
-      throw Error("不能合并不同数据、协议或工具版本");
+      throw Error("Cannot merge exports from different datasets, protocols or tool versions.");
     signature = sig;
     for (const r of x.records) {
       if (
@@ -199,11 +199,11 @@ export function mergeExports(exports) {
         !r.plan_id ||
         !["pilot", "formal"].includes(r.phase)
       )
-        throw Error("记录缺少独立判断或身份不匹配");
+        throw Error("A record is missing independent ratings or has a mismatched reviewer ID.");
       const key = [r.reviewer, r.plan_id, r.sample_id].join(":");
       const old = records.get(key);
       if (old && JSON.stringify(old) !== JSON.stringify(r))
-        throw Error("同一审阅者、同一题存在不同版本，请只导入其最新完整导出");
+        throw Error("Conflicting records exist for the same reviewer and question. Import only their latest complete export.");
       records.set(key, r);
     }
   }
