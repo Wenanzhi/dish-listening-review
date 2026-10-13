@@ -65,7 +65,7 @@ try {
     .fill("TEST ONLY: synthetic browser workflow; no human judgment.");
   await page.locator("#submit-stage").click();
   await page.waitForTimeout(150);
-  assert.match(await page.locator("#toast").textContent(), /完整试听/);
+  assert.match(await page.locator("#toast").textContent(), /Listen to each question receiver in full/);
   const receivers = await page.locator(".receiver").count();
   for (let i = 0; i < receivers; i++) {
     await page.locator(".receiver").nth(i).click();
@@ -121,7 +121,7 @@ try {
   assert.match(dl.suggestedFilename(), /dish-reviews-browser-qa.json/);
   await page.locator("[data-view=summary]").click();
   await page.locator("#my-summary").click();
-  assert.match(await page.locator("#summary-body").textContent(), /未定义/);
+  assert.match(await page.locator("#summary-body").textContent(), /Undefined/);
   // Other reviewer remains independent even on the same shared sample list.
   await page.locator("[data-view=workspace]").click();
   await page.locator("#reviewer").fill("browser-qa-other");
@@ -142,7 +142,7 @@ try {
   await page.locator("textarea[name=notes]").fill("TEST: playback unavailable");
   await page.locator("#submit-stage").click();
   await page.waitForTimeout(100);
-  assert.match(await page.locator("#toast").textContent(), /无法判断/);
+  assert.match(await page.locator("#toast").textContent(), /Unable to judge/);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "docs/mobile.png", fullPage: true });
   assert(

@@ -13,3 +13,7 @@ The local full validation passed: **39,999 question joins, 2,400 scene pairs, 4,
 The publisher script executes `node scripts/validate_data.mjs` before deployment. It checks every public/reference question join, all recording bindings, source crop sample boundaries, every lossless source-file hash, release counts, and the decoder's numeric left/right contract. The `gh-pages` deployment commit contains the exact validated `web/` tree; the repository includes an optional Actions template.
 
 Remaining evidence must come from actual reviewers: independent judgments, disagreement analysis, confirmed defects and repairs. The manuscript's pending independent-human-review claim remains pending until that study is conducted.
+
+## English interface update — 2026-10-13
+
+All interface copy, protocol instructions, calibration labels, reference panels, summary/adjudication labels and application error messages are now in English, with document language `en`. The seven existing Node test groups and the complete Chromium review workflow passed. Workspace, protocol, calibration, reference checks and populated statistics were inspected at 320, 390, 768 and 1440 pixels, with no Chinese interface text, page overflow or JavaScript errors. The updated screenshot contains an unreviewed sample. Audio/data assets, rating values, export schemas and local storage keys are unchanged.

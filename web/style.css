@@ -744,6 +744,8 @@ label > textarea {
 }
 .form-heading {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
@@ -763,6 +765,7 @@ label > textarea {
   color: #475541;
   margin-bottom: 9px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -1259,8 +1262,11 @@ dialog > label {
     margin: 0;
   }
   .topbar {
-    height: 56px;
-    padding: 0 20px;
+    min-height: 56px;
+    height: auto;
+    padding: 10px 20px;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .top-actions {
     gap: 8px;
